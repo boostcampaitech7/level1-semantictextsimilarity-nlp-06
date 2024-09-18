@@ -1,6 +1,4 @@
-import random
-from utils.utils import load_config
-
+from utils.utils import ckpt_save
 import pandas as pd
 
 from tqdm.auto import tqdm
@@ -80,16 +78,18 @@ class torch_Trainer():
         print("======================================================")
         print(f"            Pearson Coeff : {pearson:.4f}")
         print("======================================================")
+        return pearson
     
     
     def train(self, train_loader, val_loader):
         # Set initial
-        model = self.get_model(self.model_name)
+        model = self.get_model(self.model_name) 
         optim = self.get_optimizer(model=model, optimizer=self.optimizer)
         criterion = self.get_loss(self.loss)
         lr_scheduler = self.get_scheduler(optim, self.scheduler, verbose=True)
         model.to(self.device)
-
+        best_pearson = 0.0
+        
         # model train 
         model.train()
         for epoch in range(self.epoch):
@@ -111,4 +111,12 @@ class torch_Trainer():
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.epoch}] loss : {loss}"
 
             # Epoch별 Validation
-            self.valid(model, criterion, val_loader)
+            pearson = self.valid(model, criterion, val_loader)
+        
+        # validation Pearson에 따라 Ckpt 저장
+        if pearson > best_pearson: # Best Pearson 저장
+            ckpt_save(model, self.model_name, optim, self.epoch, pearson, best_pearson)
+            best_pearson = pearson
+        
+            
+        
