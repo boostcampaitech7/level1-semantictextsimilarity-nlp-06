@@ -1,4 +1,5 @@
 import random
+import argparse
 
 from utils.utils import load_config
 from utils.Trainer import torch_Trainer
@@ -15,7 +16,12 @@ random.seed(0)
 
 if __name__ == '__main__':
     
-    config = load_config("./config/Base_config.yaml")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", default="Base_config", required=True)
+    args = parser.parse_args()
+
+    config_path = f"./config/{args.config}.yaml"
+    config = load_config(config_path)
 
     dataLoader = TextDataloader(
                     model_name=config.model_name,
@@ -32,7 +38,7 @@ if __name__ == '__main__':
     
     trainer = torch_Trainer(config)
     trainer.train(train_loader, val_loader)
-
+    
     
 
     
