@@ -113,10 +113,24 @@ class torch_Trainer():
             # Epoch별 Validation
             pearson = self.valid(model, criterion, val_loader)
         
-        # validation Pearson에 따라 Ckpt 저장
-        if pearson > best_pearson: # Best Pearson 저장
-            ckpt_save(model, self.model_name, optim, self.epoch, pearson, best_pearson)
-            best_pearson = pearson
+            # validation Pearson에 따라 Ckpt 저장
+            if pearson > best_pearson: # Best Pearson 저장
+                ckpt_save(model, self.model_name, optim, self.epoch, pearson, best_pearson)
+                best_pearson = pearson
         
             
+    def predict(self, model, dataloader):
+        model.eval()
+        all_preds = []
+        with torch.no_grad():
+            predict_bar = tqdm(dataloader)
+            for step, batch in enumerate(predict_bar):
+                x = batch
+                x = x.to(self.device)
+                predict = model(x)
+                
+                all_preds.append(predict.logits.squeeze())
         
+        predictions = torch.cat(all_preds)
+        
+        return predictions
