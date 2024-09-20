@@ -53,6 +53,13 @@ class torch_Trainer():
                                                               factor=0.00001,
                                                               verbose=verbose)
         # add Scheduler
+        elif scheduler.name == "CosineAnnealingWarmRestarts":
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optimizer,
+                                                                                T_0=scheduler.t0,
+                                                                                T_mult=scheduler.tmult,
+                                                                                eta_min=scheduler.etaMin)
+        else:
+            return None
         return lr_scheduler
 
     def valid(self, model, criterion, val_loader):
@@ -100,16 +107,16 @@ class torch_Trainer():
                 y = y.to(self.device)
                 
                 # Calc Loss
-                outputs = model(x)
+                outputs = model(x) 
                 loss = criterion(outputs.logits.squeeze(), y.squeeze())
                 
                 # update weights and Scheduler
                 loss.backward()
                 optim.step()
                 optim.zero_grad()
-                # lr_scheduler.step()
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.epoch}] loss : {loss}"
-
+                if lr_scheduler is not None:
+                    lr_scheduler.step() # Epoch이 너무 짧으므로 batch에 scheduler 도입
             # Epoch별 Validation
             pearson = self.valid(model, criterion, val_loader)
         
