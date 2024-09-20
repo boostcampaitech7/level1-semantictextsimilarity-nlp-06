@@ -60,13 +60,15 @@ class torch_Trainer():
         val_bar = tqdm(val_loader)
         all_preds = []
         all_labels = []
+        total_loss = 0
         with torch.no_grad():
             for step, batch in enumerate(val_bar):
                 x, y = batch
                 x = x.to(self.device)
                 y = y.to(self.device)
                 outputs = model(x) # output) outputs.logits (예측결과)
-                loss_v = criterion(outputs.logits.squeeze(), y.squeeze()) # validation Loss라서 없어도 됨
+                loss_v = criterion(outputs.logits.squeeze(), y.squeeze()) # validation Loss라서 없어도 됨 <- # 성능 확인 시 필요할 수 있을 것 같아 우선 추가함
+                total_loss += loss_v.item()
 
                 # Batch 별로 예측한 데이터와 label값들을 전체 데이터로 넣어줌
                 all_preds.append(outputs.logits.squeeze())
@@ -74,9 +76,11 @@ class torch_Trainer():
 
         all_preds = torch.cat(all_preds)
         all_labels = torch.cat(all_labels)
+        avg_loss = total_loss / len(val_loader)
         pearson = torchmetrics.functional.pearson_corrcoef(all_preds, all_labels) # Pearson 상관계수
         print("======================================================")
-        print(f"            Pearson Coeff : {pearson:.4f}")
+        print(f"        Validation Loss : {avg_loss:.4f}")
+        print(f"        Pearson Coeff : {pearson:.4f}")
         print("======================================================")
         return pearson
     
