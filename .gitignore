@@ -3,3 +3,4 @@ data/
 __pycache__
 saved_model
 output
+wandb

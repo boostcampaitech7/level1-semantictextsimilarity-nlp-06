@@ -62,10 +62,10 @@ if __name__ == '__main__':
                 'goal': 'maximize'
             },
             'parameters': {
-                'batch_size': {'values': [4, 8, 16]},
-                'max_epoch': {'values': [5, 10, 20, 30, 40]},
+                'batch_size': {'values': [4, 8, 16, 32, 64]},
+                'max_epoch': {'values': [1, 3, 5, 10, 20, 30]},
                 'learning_rate': {
-                    'distribution': 'log_uniform',
+                    'distribution': 'uniform',
                     'min': 1e-6,
                     'max': 1e-4
                 },
@@ -78,7 +78,7 @@ if __name__ == '__main__':
             }
         }
 
-        os.environ["WANDB_API_KEY"] = "(본인 키 입력)"  ##TODO: 팀으로도 가능할 것 같은데, 추후 추가
+        os.environ["WANDB_API_KEY"] = "(본인 키 입력)" 
         wandb.login()
         
         sweep_id = wandb.sweep(sweep_config, project=f"project1_sts_test_{config.model_name.split('/')[1]}")

@@ -122,11 +122,11 @@ class torch_Trainer():
                 optim.zero_grad()
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.epoch}] loss : {loss}"
                 if lr_scheduler is not None:
-                    lr_scheduler.step() # Epoch이 너무 짧으므로 batch에 scheduler 도입
+                    lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
             # Epoch별 Validation
             pearson = self.valid(model, criterion, val_loader)
-            # if self.use_wandb:
-            #     wandb.log({"validation_pearson": pearson, "epoch": epoch})
+            if self.use_wandb:
+                wandb.log({"validation_pearson": pearson, "epoch": epoch})
 
             # validation Pearson에 따라 Ckpt 저장
             if pearson > best_pearson: # Best Pearson 저장
