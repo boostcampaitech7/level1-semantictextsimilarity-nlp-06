@@ -7,9 +7,10 @@ import transformers
 import torch
 import torchmetrics
 import pytorch_lightning as pl
+import wandb
 
 class torch_Trainer():
-    def __init__(self, config):
+    def __init__(self, config, use_wandb=False):
 
         self.model_name = config.model_name
         self.lr = config.training.learning_rate
@@ -19,6 +20,7 @@ class torch_Trainer():
         self.optimizer = config.training.optimization
         self.epoch = config.training.max_epoch
         self.device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
+        self.use_wandb = use_wandb
 
     def get_model(self, model_name):
         model = transformers.AutoModelForSequenceClassification.from_pretrained(
@@ -112,7 +114,9 @@ class torch_Trainer():
 
             # Epoch별 Validation
             pearson = self.valid(model, criterion, val_loader)
-        
+            # if self.use_wandb:
+            #     wandb.log({"validation_pearson": pearson, "epoch": epoch})
+
             # validation Pearson에 따라 Ckpt 저장
             if pearson > best_pearson: # Best Pearson 저장
                 ckpt_save(model, self.model_name, optim, self.epoch, pearson, best_pearson)
