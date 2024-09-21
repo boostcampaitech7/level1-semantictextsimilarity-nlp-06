@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--submit_path", type=str, default='../../sample_submission.csv', help="path to sample_submission.csv")
     arg = parser.parse_args()
 
-    with open(os.path.join(arg.model_path), 'config.json') as f:
+    with open(os.path.join(arg.model_path, 'config.json')) as f:
         model_config = json.load(f)
     
     model = AutoModelForSequenceClassification.from_pretrained(arg.model_path)
