@@ -1,4 +1,4 @@
-model_name': klue/roberta-small
+model_name: klue/roberta-small
 training:
   batch_size: 32
   max_epoch: 1

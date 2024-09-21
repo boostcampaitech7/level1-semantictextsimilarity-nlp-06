@@ -31,7 +31,7 @@ if __name__ == '__main__':
                     dev_path=config.test.dev_path,
                     test_path=config.test.test_path,
                     predict_path=config.test.predict_path
-                )
+                ) # DataLoader 객체 생성
     dataLoader.setup(stage="fit")
     train_loader = dataLoader.train_dataloader()
     val_loader = dataLoader.val_dataloader()

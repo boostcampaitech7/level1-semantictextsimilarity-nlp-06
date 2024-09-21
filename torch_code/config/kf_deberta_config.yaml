@@ -1,4 +1,4 @@
-model_name': kakaobank/kf-deberta-base
+model_name: kakaobank/kf-deberta-base
 training:
   batch_size: 16
   max_epoch: 10
