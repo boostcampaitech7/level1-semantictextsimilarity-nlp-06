@@ -1,9 +1,9 @@
-model_name: klue/roberta-small
+model_name': snunlp/KR-SBERT-Medium-klueNLI-klueSTS
 training:
   batch_size: 32
-  max_epoch: 1
+  max_epoch: 3
   shuffle: True
-  learning_rate: 0.00002
+  learning_rate: 0.00001
   train_path': '../../data/train.csv'
   loss: MSELoss
   optimization:

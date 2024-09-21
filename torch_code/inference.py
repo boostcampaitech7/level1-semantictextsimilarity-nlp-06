@@ -43,7 +43,9 @@ if __name__ == '__main__':
     predictions = trainer.predict(model=model, dataloader=predict_loader)
     predictions = list(round(float(i), 1) for i in predictions)
 
-    output = pd.read_csv("../../data/sample_submission.csv")
+
+    # 폴더 만드는 것 까지
+    output = pd.read_csv("../../../data/sample_submission.csv")
     output["target"] = predictions
     output.to_csv('./output/output.csv', index=False)
     print("Complete Extract ouptut.csv")
