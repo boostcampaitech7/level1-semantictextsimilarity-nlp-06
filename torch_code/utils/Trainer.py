@@ -147,7 +147,7 @@ class torch_Trainer():
                     lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
             
             # 해당 epoch 내 평균 training loss
-            avg_loss_train = total_loss_train / len(val_loader)
+            avg_loss_train = total_loss_train / len(train_loader)
 
             # Epoch별 Validation
             avg_loss_valid, pearson = self.valid(model, criterion, val_loader)
