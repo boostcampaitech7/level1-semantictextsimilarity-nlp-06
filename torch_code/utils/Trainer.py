@@ -153,7 +153,9 @@ class torch_Trainer():
             avg_loss_valid, pearson = self.valid(model, criterion, val_loader)
 
             # epoch별 결과값 출력
-            print(f"Training Loss (Average): {avg_loss_train:.4f} | Validation Loss: {avg_loss_valid:.4f} | Pearson Coeff : {pearson:.4f}")
+            print("="*100)
+            print(f"Training Loss (Average): {avg_loss_train:.4f} | Validation Loss (Average): {avg_loss_valid:.4f} | Pearson Coeff : {pearson:.4f}")
+            print("="*100)
 
             # Early Stop 여부 확인
             if self.early_stop:
@@ -177,7 +179,7 @@ class torch_Trainer():
         with torch.no_grad():
             predict_bar = tqdm(dataloader)
             for step, batch in enumerate(predict_bar):
-                x = {key: val.to(self.device) for key, val in batch[0].items()}
+                x = {key: val.to(self.device) for key, val in batch.items()}
                 predict = model(**x)
                 
                 all_preds.append(predict.logits.squeeze())
