@@ -95,10 +95,9 @@ class torch_Trainer():
         total_loss_valid = 0
         with torch.no_grad():
             for step, batch in enumerate(val_bar):
-                x, y = batch
-                x = x.to(self.device)
-                y = y.to(self.device)
-                outputs = model(x) # output) outputs.logits (예측결과)
+                x = {key: val.to(self.device) for key, val in batch[0].items()}
+                y = batch[1].to(self.device)
+                outputs = model(**x)  # attention mask 추가 
                 loss_v = criterion(outputs.logits.squeeze(), y.squeeze()) # validation Loss라서 없어도 됨 <- # 성능 확인 시 필요할 수 있을 것 같아 우선 추가함
                 total_loss_valid += loss_v.item()
 
@@ -131,12 +130,11 @@ class torch_Trainer():
             train_bar = tqdm(train_loader)
             total_loss_train = 0
             for step, batch in enumerate(train_bar):
-                x, y = batch
-                x = x.to(self.device)
-                y = y.to(self.device)
+                x = {key: val.to(self.device) for key, val in batch[0].items()}
+                y = batch[1].to(self.device)
                 
                 # Calc Loss
-                outputs = model(x) 
+                outputs = model(**x) 
                 loss = criterion(outputs.logits.squeeze(), y.squeeze())
                 total_loss_train += loss.item()
                 
@@ -179,9 +177,8 @@ class torch_Trainer():
         with torch.no_grad():
             predict_bar = tqdm(dataloader)
             for step, batch in enumerate(predict_bar):
-                x = batch
-                x = x.to(self.device)
-                predict = model(x)
+                x = {key: val.to(self.device) for key, val in batch[0].items()}
+                predict = model(**x)
                 
                 all_preds.append(predict.logits.squeeze())
         
