@@ -9,6 +9,28 @@ import torchmetrics
 import pytorch_lightning as pl
 import wandb
 
+
+# 일정 epoch동안 성능 개선 없으면 조기 종료
+class EarlyStopping:
+    def __init__(self, patience=5, delta=0.001):
+        self.patience = patience  # 성능 개선 없이 허용되는 에폭 수
+        self.delta = delta  # 성능 개선으로 간주되는 최소한의 변화량
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+
+    def __call__(self, score):
+        if self.best_score is None:
+            self.best_score = score
+        elif score <= self.best_score + self.delta:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.counter = 0
+
+
 class torch_Trainer():
     def __init__(self, config, use_wandb=False):
 
@@ -105,6 +127,7 @@ class torch_Trainer():
         
         # model train 
         model.train()
+        early_stopping = EarlyStopping(patience=5, delta=0.001)
         for epoch in range(self.epoch):
             train_bar = tqdm(train_loader)
             for step, batch in enumerate(train_bar):
@@ -125,6 +148,13 @@ class torch_Trainer():
                     lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
             # Epoch별 Validation
             pearson = self.valid(model, criterion, val_loader)
+
+            # Early Stop 여부 확인
+            early_stopping(pearson)
+            if early_stopping.early_stop:
+                print("Early stopping triggered")
+                break
+            
             if self.use_wandb:
                 wandb.log({"validation_pearson": pearson, "epoch": epoch})
 
