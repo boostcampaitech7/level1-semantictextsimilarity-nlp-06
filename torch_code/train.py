@@ -20,6 +20,7 @@ def run_training(config):
         model_name=config.model_name,
         batch_size=config.training.batch_size,
         shuffle=config.training.shuffle,
+        normalization = config.normalization,
         train_path=config.training.train_path,
         dev_path=config.test.dev_path,
         test_path=config.test.test_path,

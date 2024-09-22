@@ -6,11 +6,12 @@ import pandas as pd
 
 
 class TextDataloader():
-    def __init__(self, model_name, batch_size, shuffle, train_path, dev_path, test_path, predict_path):
+    def __init__(self, model_name, batch_size, shuffle, normalization, train_path, dev_path, test_path, predict_path):
         super().__init__()
         self.model_name = model_name
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.normalization = normalization
 
         self.train_path = train_path
         self.dev_path = dev_path
@@ -51,6 +52,9 @@ class TextDataloader():
             targets = data[self.target_columns].values.tolist()
         except:
             targets = []
+        
+        if self.normalization:
+            targets = [label[0]/5.0 for label in targets]
 
         # 텍스트 데이터를 전처리합니다.
         tokenized_data = self.tokenizing(data)
