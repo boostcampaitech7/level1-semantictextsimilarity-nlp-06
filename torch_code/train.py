@@ -47,7 +47,7 @@ def sweep_train():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="Base_config", required=True)
+    parser.add_argument("--config", required=True, help="Specify your config file name in ./config/")
     parser.add_argument("--wandb_sweep", action="store_true", help="Use W&B sweep for hyperparameter tuning")
     args = parser.parse_args()
 

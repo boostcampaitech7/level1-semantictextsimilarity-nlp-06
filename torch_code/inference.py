@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 from dataset.dataloader import TextDataloader
 
+import os
 
 # seed 고정
 torch.manual_seed(0)
@@ -18,8 +19,8 @@ random.seed(0)
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="Base_config", required=True)
-    parser.add_argument("--saved_model", required=True)
+    parser.add_argument("--config", required=True, help="Specify your config file name in ./config/")
+    parser.add_argument("--saved_model", required=True, help="Specify your saved model name")
     args = parser.parse_args()
 
     config_path = f"./config/{args.config}.yaml"
@@ -43,9 +44,14 @@ if __name__ == '__main__':
     predictions = trainer.predict(model=model, dataloader=predict_loader)
     predictions = list(round(float(i), 1) for i in predictions)
 
+    # output.csv 저장할 경로
+    folder_path = './output/'
 
-    # 폴더 만드는 것 까지
-    output = pd.read_csv("../../../data/sample_submission.csv")
+    # 폴더가 존재하지 않으면 생성
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    output = pd.read_csv("../data/sample_submission.csv")
     output["target"] = predictions
     output.to_csv('./output/output.csv', index=False)
     print("Complete Extract ouptut.csv")

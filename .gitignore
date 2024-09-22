@@ -1,6 +1,13 @@
+# folder
 code/
 data/
 __pycache__
 saved_model
 output
+
+# comment
+torch_code/nohup.out
+torch_code/comment.txt
+
+# tool
 wandb
