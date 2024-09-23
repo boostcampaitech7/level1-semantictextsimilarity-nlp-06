@@ -12,7 +12,7 @@ class Model():
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name, num_labels=1)
 
         if lora:
-            self.peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=32, lora_dropout=0.1)
+            self.peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=16, lora_dropout=0.1)
             self.model = get_peft_model(self.model, self.peft_config)
     
         self.training_arguments = TrainingArguments(
