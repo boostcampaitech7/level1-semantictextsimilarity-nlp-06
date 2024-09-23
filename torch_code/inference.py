@@ -29,6 +29,7 @@ if __name__ == '__main__':
                     model_name=config.model_name,
                     batch_size=config.training.batch_size,
                     shuffle=config.training.shuffle,
+                    normalization = config.normalization,
                     train_path=config.training.train_path,
                     dev_path=config.test.dev_path,
                     test_path=config.test.test_path,
@@ -41,11 +42,15 @@ if __name__ == '__main__':
     trainer = torch_Trainer(config)
     model = torch.load(f"./saved_model/{args.saved_model}.pt")
     predictions = trainer.predict(model=model, dataloader=predict_loader)
-    predictions = list(round(float(i), 1) for i in predictions)
+    
+    if config.normalization:
+        predictions = list(round(float(i)*5, 1) for i in predictions)  # 실제 label 범위로 원복
+    else:
+        predictions = list(round(float(i), 1) for i in predictions)
 
 
     # 폴더 만드는 것 까지
-    output = pd.read_csv("../../../data/sample_submission.csv")
+    output = pd.read_csv("../../data/sample_submission.csv")
     output["target"] = predictions
     output.to_csv('./output/output.csv', index=False)
     print("Complete Extract ouptut.csv")

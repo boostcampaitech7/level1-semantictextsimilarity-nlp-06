@@ -20,6 +20,7 @@ def run_training(config):
         model_name=config.model_name,
         batch_size=config.training.batch_size,
         shuffle=config.training.shuffle,
+        normalization = config.normalization,
         train_path=config.training.train_path,
         dev_path=config.test.dev_path,
         test_path=config.test.test_path,
@@ -58,8 +59,8 @@ if __name__ == '__main__':
         sweep_config = {
             'method': 'bayes',
             'metric': {
-                'name': 'validation_pearson',
-                'goal': 'maximize'
+                'name': 'validation_loss',
+                'goal': 'minimize'
             },
             'parameters': {
                 'batch_size': {'values': [4, 8, 16, 32, 64]},
@@ -75,6 +76,12 @@ if __name__ == '__main__':
                     'max': 0.1
                 },
                 'scheduler_patience': {'values': [3, 5, 7]}
+            },
+            'early_terminate': {  # sweep의 조기 종료 옵션 설정
+                'type': 'hyperband',
+                's': 2,  # Hyperband의 bracket 수를 결정합니다. 높은 값일수록 더 많은 bracket이 생성
+                'eta': 3,  # 리소스 할당 비율 (예: eta=3이면 각 단계에서 상위 1/3만 남김)
+                'max_iter':25  # 각 구성에 대해 최대 반복 횟수
             }
         }
 
