@@ -2,12 +2,18 @@ import numpy as np
 from scipy.stats import pearsonr
 from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
 
+from peft import LoraConfig, TaskType, get_peft_model
+
 
 class Model():
-    def __init__(self, model_name, output_dir, epoch, train_data, valid_data, batch_size, lr, lr_scheduler, weight_decay):
+    def __init__(self, lora, model_name, output_dir, epoch, train_data, valid_data, batch_size, lr, lr_scheduler, weight_decay):
         self.model_name = model_name
 
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name, num_labels=1)
+
+        if lora:
+            self.peft_config = LoraConfig(task_type=TaskType.SEQ_CLS, inference_mode=False, r=8, lora_alpha=32, lora_dropout=0.1)
+            self.model = get_peft_model(self.model, self.peft_config)
     
         self.training_arguments = TrainingArguments(
             output_dir=output_dir,
