@@ -1,7 +1,8 @@
 model: klue/roberta-large
+lora: True
 train_path: ./train.csv
 valid_path: ./dev.csv
-scale: False
+scale: True
 output_dir: ./result/
 epoch: 10
 batch_size: 16
