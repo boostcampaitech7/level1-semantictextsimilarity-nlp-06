@@ -15,7 +15,8 @@ if __name__ == "__main__":
     train_dataset = preprocess(task="train", data_path=config.train_path, model_name=config.model, scale=config.scale)
     valid_dataset = preprocess(task="valid", data_path=config.valid_path, model_name=config.model, scale=config.scale)
 
-    model = Model(model_name=config.model,
+    model = Model(sweeps=config.sweeps,
+                  model_name=config.model,
                   lora=config.lora,
                   output_dir=config.output_dir,
                   epoch=config.epoch,
@@ -25,4 +26,3 @@ if __name__ == "__main__":
                   lr=float(config.lr_init),
                   lr_scheduler=config.lr_scheduler,
                   weight_decay=config.weight_decay)
-    model.train()
