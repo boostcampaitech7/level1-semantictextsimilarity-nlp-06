@@ -11,19 +11,20 @@ from dataset import preprocess
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--is_scaled", type=bool, default=True, help='whether the model is peft')
+    parser.add_argument("--is_peft", type=bool, default=True, help='whether the model is peft')
+    parser.add_argument("--is_scaled", type=bool, default=True, help='whether the labels are scaled')
     parser.add_argument("--data_path", type=str, default='./test.csv', help="path to test.csv")
     parser.add_argument("--model_path", type=str, default='./results/checkpoint-584', help="dir path to safetensors")
     parser.add_argument("--submit_path", type=str, default='../../sample_submission.csv', help="path to sample_submission.csv")
     arg = parser.parse_args()
 
-    if arg.is_scaled:
+    if arg.is_peft == "True":
         with open(os.path.join(arg.model_path, 'adapter_config.json')) as f:
             model_config = json.load(f)
 
         model = AutoPeftModelForSequenceClassification.from_pretrained(arg.model_path, num_labels=1)
 
-        test_data = preprocess(task="test", data_path='../../../data/test.csv', model_name=model_config['base_model_name_or_path'])
+        test_data = preprocess(task="test", data_path='../../../data/test.csv', model_name=model_config['base_model_name_or_path'], scale=arg.is_scaled)
         test_loader = DataLoader(test_data, shuffle=False)
     else:
         with open(os.path.join(arg.model_path, 'config.json')) as f:
@@ -31,7 +32,7 @@ if __name__ == "__main__":
         
         model = AutoModelForSequenceClassification.from_pretrained(arg.model_path, num_labels=1)
 
-        test_data = preprocess(task="test", data_path=arg.data_path, model_name=model_config['_name_or_path'])
+        test_data = preprocess(task="test", data_path=arg.data_path, model_name=model_config['_name_or_path'], scale=arg.is_scaled)
         test_loader = DataLoader(test_data, shuffle=False)
 
     device = 'cuda' if torch.cuda.is_available else 'cpu'
