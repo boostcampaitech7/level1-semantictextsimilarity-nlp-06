@@ -158,7 +158,7 @@ class HyperParameterOptimizer:
             loss, pearson = self.trainer.train(train_loader, val_loader)
             pivot = loss
 
-            save_config(config, file_path=f"./saved_model/{config.model_name}_{trial.number}.txt")
+            save_config(config, file_path=f"./saved_model/{config.model_name.split('/')[-1]}_{trial.number}.yaml")
 
             # W&B에 메트릭 기록
             wandb.log({'final_loss': loss, 'final_pearson': pearson, **trial.params})
