@@ -1,0 +1,10 @@
+model: klue/roberta-large
+train_path: ./train.csv
+valid_path: ./dev.csv
+scale: False
+output_dir: ./result/
+epoch: 10
+batch_size: 16
+lr_init: 5e-5
+lr_scheduler: cosine
+weight_decay: 0.001
