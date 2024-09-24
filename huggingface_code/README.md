@@ -18,7 +18,7 @@ lr_init: 5e-5
 lr_scheduler: cosine
 weight_decay: 0.001
 ```  
-**sweeps**를 True로 지정하면 wandb의 sweeps 기능을 사용해서 하이퍼파라미터 튜닝을 시작합니다. sweeps config는 model.py에서 설정할 수 있습니다.  
+**sweeps**를 True로 지정하면 wandb의 sweeps 기능을 사용해서 하이퍼파라미터 튜닝을 시작합니다. sweeps config는 model.py에서 설정할 수 있습니다. 또한 sweeps를 사용할 때는 config.yaml에서 epoch, batch_size, lr_init, weight_decay를 설정하지 않아도 됩니다.  
 **model**은 Hugging Face에서 불러올 수 있는 uid를 지정해주시면 됩니다. 현재 `AutoModelForSequenceClassification`을 사용하고 있기 때문에 사용하고자 하는 모델 카드나 README.md를 잘 읽어보시고 지정해주세요.  
 **lora**는 PEFT 기법 중 LoRA를 적용할 것인지, 말 건지를 결정합니다. model.py에서 LoraConfig를 지정할 수 있습니다.  
 **output_dir**은 checkpoint를 저장할 dir 이름을 지정해주면 됩니다. 없으면 새로 만들어주고, 있으면 그대로 덮어씌워지므로 다른 모델로 바꿀 경우 다른 경로를 지정해주시는 게 좋습니다.  
