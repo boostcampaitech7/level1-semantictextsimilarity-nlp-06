@@ -11,13 +11,13 @@ from dataset import preprocess
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--is_peft", type=bool, default=True, help='whether the model is peft')
+    parser.add_argument("--is_scaled", type=bool, default=True, help='whether the model is peft')
     parser.add_argument("--data_path", type=str, default='./test.csv', help="path to test.csv")
     parser.add_argument("--model_path", type=str, default='./results/checkpoint-584', help="dir path to safetensors")
     parser.add_argument("--submit_path", type=str, default='../../sample_submission.csv', help="path to sample_submission.csv")
     arg = parser.parse_args()
 
-    if arg.is_peft:
+    if arg.is_scaled:
         with open(os.path.join(arg.model_path, 'adapter_config.json')) as f:
             model_config = json.load(f)
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
             predictions = model(**batch)
             outputs.append(predictions.logits)
     
-    if arg.is_peft:
+    if arg.is_scaled:
         outputs = list(round(float(i*5.), 1) for i in outputs)
     else:
         outputs = list(round(float(i), 1) for i in outputs)
