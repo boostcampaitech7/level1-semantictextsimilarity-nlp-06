@@ -1,7 +1,0 @@
-1) .gitignore 에서는 data/가 있고 config는 ../../data/를 참조하고 있음 -> config를 ../data로 변경
-1-1) inference.py에서 ../../data/sample_submission.csv 도 ../data/sample_submission.csv 로 변경
-
-2) train.py 및 inference.py 에서는 argparser 설정 중 config default값이 있으나 required=True도 있음 -> required로 인해 무조건 명시해야 하므로 default 삭제 및 help 추가
-
-3) inference.py에서 output 폴더 없으면 에러남 -> output 폴더 없으면 자동 생성하는 코드 추가
-
