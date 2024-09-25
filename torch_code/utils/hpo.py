@@ -38,7 +38,7 @@ class HyperParameterOptimizer:
         self.config.normalization = trial.suggest_categorical("normalization", [False])
         self.config.training.max_epoch = trial.suggest_int("max_epoch", 10, 10) # 1, 10
         self.config.training.learning_rate = trial.suggest_float("learning_rate", 9e-6, 3e-5) # 1e-5, 1e-4
-        #self.config.training.scheduler.patience = trial.suggest_int("patience", 1, 2) # 10% of max_epoch is not bad
+        self.config.training.scheduler.patience = trial.suggest_int("patience", 3, 3) # 10% of max_epoch is not bad
         self.config.training.scheduler.name = trial.suggest_categorical("scheduler_name", ["CosineAnnealingWarmRestarts"]) #["ReduceLROnPlateau", "CosineAnnealingWarmRestarts"])
         self.config.training.scheduler.t0 = trial.suggest_int("t0", 2, 2) # 5, 10
         self.config.training.scheduler.tmult = trial.suggest_int("tmult", 2, 2)
