@@ -1,0 +1,12 @@
+sweeps: False
+model: klue/roberta-small
+lora: False
+train_path: ../../train_preprocess_v1.csv
+valid_path: ../../dev_preprocess_v1.csv
+scale: True
+output_dir: ./sample/
+epoch: 10 #
+batch_size: 16 #
+lr_init: 5e-5 #
+lr_scheduler: cosine
+weight_decay: 0.001 #

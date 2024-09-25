@@ -2,7 +2,7 @@ import random
 import argparse
 
 from utils.utils import load_config
-from utils.Trainer import torch_Trainer
+from utils.Trainer import TorchTrainer
 
 import pandas as pd
 import torch
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     predict_loader = dataLoader.predict_dataloader()
     test_loader = dataLoader.test_dataloader()
     
-    trainer = torch_Trainer(config)
+    trainer = TorchTrainer(config)
     model = torch.load(f"./saved_model/{args.saved_model}.pt")
     predictions = trainer.predict(model=model, dataloader=predict_loader)
     

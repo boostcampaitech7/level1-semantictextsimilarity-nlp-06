@@ -1,8 +1,9 @@
 import random
 import argparse
 
+from utils.hpo import HyperParameterOptimizer as HPO
 from utils.utils import load_config
-from utils.Trainer import torch_Trainer
+from utils.Trainer import TorchTrainer
 
 import torch
 from dataset.dataloader import TextDataloader
@@ -16,8 +17,13 @@ torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 random.seed(seed)
 
-def run_training(config):
-    dataLoader = TextDataloader(
+project_name = ""
+
+
+
+def run_training():
+    # set dataloader
+    dataloader = TextDataloader(
         model_name=config.model_name,
         batch_size=config.training.batch_size,
         shuffle=config.training.shuffle,
@@ -27,36 +33,40 @@ def run_training(config):
         test_path=config.test.test_path,
         predict_path=config.test.predict_path
     )
-    dataLoader.setup(stage="fit")
-    train_loader = dataLoader.train_dataloader()
-    val_loader = dataLoader.val_dataloader()
+    dataloader.setup(stage="fit")
+    train_loader = dataloader.train_dataloader()
+    val_loader = dataloader.val_dataloader()
 
-    trainer = torch_Trainer(config, use_wandb=args.wandb_sweep)
-    trainer.train(train_loader, val_loader)
+    trainer = TorchTrainer(config, use_wandb=wandb.run)
+    
+    loss, pearson = trainer.train(train_loader, val_loader)
 
+    return loss, pearson
 
-def sweep_train():
+def run_sweep():
     with wandb.init() as run:
-        # wandb.config에서 하이퍼파라미터 가져오기
-        config.training.batch_size = wandb.config.batch_size
-        config.training.max_epoch = wandb.config.max_epoch
-        config.training.learning_rate = wandb.config.learning_rate
-        config.training.optimization.weight_decay = wandb.config.weight_decay
+        set_config(config, wandb.config)
+        run_training()
 
-        run_training(config)
+def run():
+    # 2 different hpo APIs
+    match config.training.hpo:
+        case "wandb_sweep":
+            # You must check that the args.wandb is 'True' 
+            sweep_config = init_sweep_config()    
+            sweep_id = wandb.sweep(sweep_config, project=project_name)
+            wandb.agent(sweep_id, function=run_sweep)
+        case "optuna":
+            hpo = HPO(100, config)
+            hpo.set_project_name(project_name)
+            hpo.set_sampler("TPE")
+            hpo.set_pruner("Hyperband")
+            hpo.optimize(direction="minimize")
+        case _:
+            run_training()
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", default="Base_config", required=True)
-    parser.add_argument("--wandb_sweep", action="store_true", help="Use W&B sweep for hyperparameter tuning")
-    args = parser.parse_args()
-
-    config_path = f"./config/{args.config}.yaml"
-    config = load_config(config_path)
-
-    if args.wandb_sweep:
-        sweep_config = {
+def init_sweep_config():
+    sweep_config = {
             'method': 'bayes',
             'metric': {
                 'name': 'validation_loss',
@@ -82,14 +92,39 @@ if __name__ == '__main__':
                 'eta': 3,  # 리소스 할당 비율 (예: eta=3이면 각 단계에서 상위 1/3만 남김)
                 'max_iter':25  # 각 구성에 대해 최대 반복 횟수
             }
-        }
+    }
 
-        os.environ["WANDB_API_KEY"] = "0a7cec09004c2912bda4fd4f050dbd836efab943" 
+    return sweep_config
+
+def set_config(config, new_config):
+    # new_config에서 하이퍼파라미터 가져오기
+    config.training.batch_size = new_config.batch_size
+    config.training.max_epoch = new_config.max_epoch
+    config.training.learning_rate = new_config.learning_rate
+    config.training.optimizer.weight_decay = new_config.weight_decay
+    config.training.scheduler.patience = new_config.scheduler_patience
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", required=True, help="Specify your config file name in ./config/")
+    parser.add_argument("--wandb", action="store_true", help="Use W&B visualization")
+    #parser.add_argument("--wandb_sweep", action="store_true", help="Use W&B sweep for hyperparameter tuning")
+    #parser.add_argument("--optuna", action="store_true", help="Use optuna for hyperparameter tuning")
+    args = parser.parse_args()
+
+    config_path = f"./config/{args.config}.yaml"
+    config = load_config(config_path)
+
+    if args.wandb:
+        # W&B enabled
+        os.environ["WANDB_API_KEY"] = "f3b9c338e3c1b5fb7ffe28c2d3d5669d024ae93b" #"(본인 키 입력)" 
+        project_name = f"project1_sts_test_{config.model_name.split('/')[1]}"
+
         wandb.login()
-        
-        sweep_id = wandb.sweep(sweep_config, project=f"project1_sts_test_{config.model_name.split('/')[1]}")
-        wandb.agent(sweep_id, function=sweep_train)
     else:
-        # W&B 없이 기본 설정으로 실행
-        run_training(config)
+        # W&B disabled
+        wandb.init(mode="disabled")
+
+    run()
 
