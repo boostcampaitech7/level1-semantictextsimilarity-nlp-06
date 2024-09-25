@@ -31,20 +31,28 @@ class EarlyStopping:
             self.counter = 0
 
 
-class torch_Trainer():
+class TorchTrainer():
     def __init__(self, config, use_wandb=False):
 
         self.model_name = config.model_name
-        self.lr = config.training.learning_rate
-        self.loss = config.training.loss
         self.batch_size = config.training.batch_size
+        self.learning_rate = config.training.learning_rate
+        self.criterion = config.training.criterion
         self.scheduler = config.training.scheduler
-        self.optimizer = config.training.optimization
-        self.epoch = config.training.max_epoch
+        self.optimizer = config.training.optimizer
+        self.max_epoch = config.training.max_epoch
         self.device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
         self.early_stop = config.training.early_stop
         self.use_wandb = use_wandb
+        self.hpo = config.training.hpo
+        self.trial = None
 
+    def set_trial(self, trial):
+        self.trial = trial
+
+    def get_finetuned_model(self):
+        return self.model
+    
     def get_model(self, model_name):
         model = transformers.AutoModelForSequenceClassification.from_pretrained(
             pretrained_model_name_or_path=model_name, num_labels=1
@@ -55,19 +63,20 @@ class torch_Trainer():
     def get_optimizer(self, model, optimizer):
         if optimizer.name == "AdamW":
             optim = torch.optim.AdamW(model.parameters(), weight_decay=optimizer.weight_decay,
-                                      lr=self.lr)
+                                      lr=self.learning_rate)
         # Add Optim
 
         return optim
 
-    def get_loss(self, loss):
-        if loss == "MSELoss":
+    def get_criterion(self, criterion):
+        # Add criterion(loss function)
+        if criterion == "MSELoss":
             return torch.nn.MSELoss()
-        elif loss == "l1Loss":
+        elif criterion == "L1Loss":
             return torch.nn.L1Loss()
-        elif loss == "HuberLoss":
+        elif criterion == "HuberLoss":
             return torch.nn.HuberLoss()
-        # Add Loss
+
     
     def get_scheduler(self, optimizer, scheduler, verbose):
         # LR Scheduler
@@ -118,15 +127,15 @@ class torch_Trainer():
         # Set initial
         model = self.get_model(self.model_name) 
         optim = self.get_optimizer(model=model, optimizer=self.optimizer)
-        criterion = self.get_loss(self.loss)
+        criterion = self.get_criterion(self.criterion)
         lr_scheduler = self.get_scheduler(optim, self.scheduler, verbose=True)
         model.to(self.device)
-        best_loss = float('inf')
+        current_best_loss = float('inf')
         
         # model train 
         model.train()
-        early_stopping = EarlyStopping(patience=5, delta=0.001)
-        for epoch in range(self.epoch):
+        early_stopping = EarlyStopping(patience=self.scheduler.patience, delta=0.001)
+        for epoch in range(self.max_epoch):
             train_bar = tqdm(train_loader)
             total_loss_train = 0
             for step, batch in enumerate(train_bar):
@@ -142,9 +151,14 @@ class torch_Trainer():
                 loss.backward()
                 optim.step()
                 optim.zero_grad()
-                train_bar.desc=f"Train Epoch[{epoch+1}/{self.epoch}] loss : {loss}"
+                train_bar.desc=f"Train Epoch[{epoch+1}/{self.max_epoch}] loss : {loss}"
                 if lr_scheduler is not None:
-                    lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
+                    if self.scheduler.name == "ReduceLROnPlateau":
+                        lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
+
+                    elif self.scheduler.name == "CosineAnnealingWarmRestarts":
+                        lr_scheduler.step() # Epoch이 너무 짧으므로 batch에 scheduler 도입
+
             
             # 해당 epoch 내 평균 training loss
             avg_loss_train = total_loss_train / len(train_loader)
@@ -163,14 +177,30 @@ class torch_Trainer():
                 if early_stopping.early_stop:
                     print("Early stopping triggered")
                     break
-            
-            if self.use_wandb:
-                wandb.log({"validation_loss": avg_loss_valid, "epoch": epoch})
 
             # validation loss에 따라 Ckpt 저장
-            if avg_loss_valid < best_loss: # validation_loss 저장
-                ckpt_save(model, self.model_name, optim, self.epoch, avg_loss_valid, best_loss)
-                best_loss = avg_loss_valid
+            if avg_loss_valid < current_best_loss: # validation_loss 저장
+                if self.use_wandb: # 갱신될 때만 logging
+                    wandb.log({"validation_loss": avg_loss_valid, "validation_pearson": pearson, "epoch": epoch}) 
+            
+                prev_best_loss = current_best_loss
+                current_best_loss = avg_loss_valid
+                
+                result = {
+                    "model_name":self.model_name,
+                    "optim":optim,
+                    "epoch":epoch,
+                    "prev_best_loss":prev_best_loss,
+                    "current_best_loss":current_best_loss,
+                    "pearson_valid":pearson
+                }
+                if self.hpo == "optuna":
+                    result["model_name"] = f"{self.model_name}_trial_{self.trial.number}"
+
+                ckpt_save(model, result) #self.model_name, optim, self.max_epoch, avg_loss_valid, best_loss)
+
+            
+        return avg_loss_valid, pearson
         
             
     def predict(self, model, dataloader):

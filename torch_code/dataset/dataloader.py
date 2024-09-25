@@ -54,8 +54,8 @@ class TextDataloader():
             targets = []
         
         if self.normalization:
-            targets = [label[0]/5.0 for label in targets]
-
+            targets = [[label[0]/5.0] for label in targets] # error 떠서 [[]] 구조로 바꿔봄
+        
         # 텍스트 데이터를 전처리합니다.
         tokenized_data = self.tokenizing(data)
 
