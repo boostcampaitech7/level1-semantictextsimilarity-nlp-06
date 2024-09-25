@@ -134,7 +134,7 @@ class TorchTrainer():
         
         # model train 
         model.train()
-        early_stopping = EarlyStopping(patience=5, delta=0.001)
+        early_stopping = EarlyStopping(patience=self.scheduler.patience, delta=0.001)
         for epoch in range(self.max_epoch):
             train_bar = tqdm(train_loader)
             total_loss_train = 0
