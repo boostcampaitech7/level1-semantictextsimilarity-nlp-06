@@ -153,7 +153,12 @@ class TorchTrainer():
                 optim.zero_grad()
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.max_epoch}] loss : {loss}"
                 if lr_scheduler is not None:
-                    lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
+                    if self.scheduler.name == "ReduceLROnPlateau":
+                        lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
+
+                    elif self.scheduler.name == "CosineAnnealingWarmRestarts":
+                        lr_scheduler.step() # Epoch이 너무 짧으므로 batch에 scheduler 도입
+
             
             # 해당 epoch 내 평균 training loss
             avg_loss_train = total_loss_train / len(train_loader)
@@ -172,12 +177,12 @@ class TorchTrainer():
                 if early_stopping.early_stop:
                     print("Early stopping triggered")
                     break
-            
-            if self.use_wandb:
-                wandb.log({"validation_loss": avg_loss_valid, "validation_pearson": pearson, "epoch": epoch})
 
             # validation loss에 따라 Ckpt 저장
             if avg_loss_valid < current_best_loss: # validation_loss 저장
+                if self.use_wandb: # 갱신될 때만 logging
+                    wandb.log({"validation_loss": avg_loss_valid, "validation_pearson": pearson, "epoch": epoch}) 
+            
                 prev_best_loss = current_best_loss
                 current_best_loss = avg_loss_valid
                 

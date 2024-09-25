@@ -16,7 +16,7 @@ training:
     t0: 5
     tmult: 2
     etaMin: 0.00001
-  hpo: "optuna"
+  hpo: ""
 
 
 test:

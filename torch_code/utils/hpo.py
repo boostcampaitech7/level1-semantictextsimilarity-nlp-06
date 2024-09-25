@@ -36,15 +36,15 @@ class HyperParameterOptimizer:
         
         self.config.training.batch_size = trial.suggest_int("batch_size", 16, 16) # 2, 28
         self.config.normalization = trial.suggest_categorical("normalization", [False])
-        self.config.training.max_epoch = trial.suggest_int("max_epoch", 5, 5) # 1, 10
-        self.config.training.learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-4)
+        self.config.training.max_epoch = trial.suggest_int("max_epoch", 10, 10) # 1, 10
+        self.config.training.learning_rate = trial.suggest_float("learning_rate", 9e-6, 3e-5) # 1e-5, 1e-4
         #self.config.training.scheduler.patience = trial.suggest_int("patience", 1, 2) # 10% of max_epoch is not bad
-        self.config.training.scheduler.name = trial.suggest_categorical("scheduler_name", ["ReduceLROnPlateau", "CosineAnnealingWarmRestarts"])
+        self.config.training.scheduler.name = trial.suggest_categorical("scheduler_name", ["CosineAnnealingWarmRestarts"]) #["ReduceLROnPlateau", "CosineAnnealingWarmRestarts"])
         self.config.training.scheduler.t0 = trial.suggest_int("t0", 2, 2) # 5, 10
         self.config.training.scheduler.tmult = trial.suggest_int("tmult", 2, 2)
-        self.config.training.scheduler.etaMin = trial.suggest_float("etaMin", 1e-6, 1e-5)
+        self.config.training.scheduler.etaMin = trial.suggest_float("etaMin", 1e-6, 3e-5)
         #self.config.training.optimizer.name = trial.suggest_categorical("optimizer", ["AdamW"])
-        self.config.training.optimizer.weight_decay = trial.suggest_float("weight_decay", 1e-4,1e-3)
+        self.config.training.optimizer.weight_decay = trial.suggest_float("weight_decay", 9e-7, 3e-6) # 1e-4, 1e-3
         """
         MSELoss (Mean Squared Error Loss):
         보통 0.0001에서 0.001 사이의 값을 사용합니다1.
@@ -53,7 +53,7 @@ class HyperParameterOptimizer:
         HuberLoss:
         Huber 손실 함수의 경우, 0.0001에서 0.01 사이의 값을 사용합니다1
         """
-        self.config.training.criterion = trial.suggest_categorical("criterion", ["MSELoss", "L1Loss", "HuberLoss"])
+        self.config.training.criterion = trial.suggest_categorical("criterion", ["MSELoss", "L1Loss"]) #, "HuberLoss"])
 
         """
         trainer = self.trainer
@@ -158,7 +158,7 @@ class HyperParameterOptimizer:
             loss, pearson = self.trainer.train(train_loader, val_loader)
             pivot = loss
 
-            save_config(config, file_path=f"./saved_model/{config.model_name.split('/')[-1]}_{trial.number}.yaml")
+            save_config(config, file_path=f"./saved_model/{config.model_name.split('/')[-1]}_trial_{trial.number}.yaml")
 
             # W&B에 메트릭 기록
             wandb.log({'final_loss': loss, 'final_pearson': pearson, **trial.params})

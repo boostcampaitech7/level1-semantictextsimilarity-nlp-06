@@ -7,7 +7,7 @@ training:
   early_stop: True
   learning_rate: 0.000654616132115182
   train_path': '../../data/train.csv'
-  criterion: L1Loss
+  criterion: MSELoss
   optimizer:
     name: AdamW
     weight_decay: 0.007719344100307518
