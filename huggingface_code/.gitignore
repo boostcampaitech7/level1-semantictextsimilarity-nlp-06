@@ -1,6 +1,7 @@
 # custom
 *.ipynb
 !peft_test.ipynb
+!ensemble.ipynb
 *.csv
 *.yaml
 !sample_config.yaml
