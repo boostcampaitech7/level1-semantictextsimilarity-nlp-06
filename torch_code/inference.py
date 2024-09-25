@@ -44,10 +44,11 @@ if __name__ == '__main__':
     predictions = trainer.predict(model=model, dataloader=predict_loader)
     
     if config.normalization:
-        predictions = list(round(float(i)*5, 1) for i in predictions)  # 실제 label 범위로 원복
+        predictions = list(abs(round(float(i)*5, 1)) for i in predictions)  # 실제 label 범위로 원복
     else:
-        predictions = list(round(float(i), 1) for i in predictions)
+        predictions = list(abs(round(float(i), 1)) for i in predictions)
 
+    trainer.valid(model, torch.nn.MSELoss(), test_loader) # Pearson Check
 
     # 폴더 만드는 것 까지
     output = pd.read_csv("../../data/sample_submission.csv")

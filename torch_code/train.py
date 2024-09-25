@@ -10,10 +10,11 @@ import wandb
 import os
 
 # seed 고정
-torch.manual_seed(0)
-torch.cuda.manual_seed(0)
-torch.cuda.manual_seed_all(0)
-random.seed(0)
+seed = 42
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+random.seed(seed)
 
 def run_training(config):
     dataLoader = TextDataloader(
@@ -41,7 +42,6 @@ def sweep_train():
         config.training.max_epoch = wandb.config.max_epoch
         config.training.learning_rate = wandb.config.learning_rate
         config.training.optimization.weight_decay = wandb.config.weight_decay
-        config.training.scheduler.patience = wandb.config.scheduler_patience
 
         run_training(config)
 
@@ -63,19 +63,18 @@ if __name__ == '__main__':
                 'goal': 'minimize'
             },
             'parameters': {
-                'batch_size': {'values': [4, 8, 16, 32, 64]},
-                'max_epoch': {'values': [1, 3, 5, 10, 20, 30]},
+                'batch_size': {'values': [16]},
+                'max_epoch': {'values': [10]},
                 'learning_rate': {
                     'distribution': 'uniform',
-                    'min': 1e-6,
-                    'max': 1e-4
+                    'min': 1e-5,
+                    'max': 4e-5
                 },
                 'weight_decay': {
                     'distribution': 'uniform',
                     'min': 0.001,
                     'max': 0.1
-                },
-                'scheduler_patience': {'values': [3, 5, 7]}
+                }
             },
             'early_terminate': {  # sweep의 조기 종료 옵션 설정
                 'type': 'hyperband',
@@ -85,7 +84,7 @@ if __name__ == '__main__':
             }
         }
 
-        os.environ["WANDB_API_KEY"] = "(본인 키 입력)" 
+        os.environ["WANDB_API_KEY"] = "0a7cec09004c2912bda4fd4f050dbd836efab943" 
         wandb.login()
         
         sweep_id = wandb.sweep(sweep_config, project=f"project1_sts_test_{config.model_name.split('/')[1]}")
