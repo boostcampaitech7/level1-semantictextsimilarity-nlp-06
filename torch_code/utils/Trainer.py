@@ -69,14 +69,14 @@ class TorchTrainer():
         return optim
 
     def get_criterion(self, criterion):
+        # Add criterion(loss function)
         if criterion == "MSELoss":
             return torch.nn.MSELoss()
         elif criterion == "L1Loss":
             return torch.nn.L1Loss()
         elif criterion == "HuberLoss":
             return torch.nn.HuberLoss()
-        return torch.nn.L1Loss()
-        # Add Loss function
+
     
     def get_scheduler(self, optimizer, scheduler, verbose):
         # LR Scheduler
