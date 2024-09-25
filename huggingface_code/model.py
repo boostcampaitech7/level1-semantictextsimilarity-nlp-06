@@ -35,8 +35,8 @@ class Model():
                     'max_iter': 100
                 },
                 "parameters": {
-                    'max_epoch': {'values': [1, 3, 5, 10]},
-                    'batch_size': {'values': [8, 16]},
+                    'max_epoch': {'values': [1, 3, 5]},
+                    'batch_size': {'value': 16},
                     'learning_rate': {
                         'distribution': 'uniform',
                         'min': 1e-5,
@@ -53,6 +53,7 @@ class Model():
             self.sweep_id = wandb.sweep(self.sweep_config, project=self.model_name.split('/')[1])
 
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name, num_labels=1)
+        for param in self.model.parameters(): param.data = param.data.contiguous()
 
         if lora:
             self.peft_config = LoraConfig(task_type=TaskType.SEQ_CLS,
@@ -87,7 +88,7 @@ class Model():
                     )
 
                     self.trainer.train()
-            wandb.agent(self.sweep_id, train, count=1)
+            wandb.agent(self.sweep_id, train, count=10)
         else:
             self.training_arguments = TrainingArguments(
                 output_dir=self.output_dir,
