@@ -5,7 +5,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 
 
-def preprocess(task, data_path, model_name): # task: "train", "valid", "test"
+def preprocess(task, data_path, model_name, scale): # task: "train", "valid", "test"
     data_df = pandas.read_csv(data_path)
     raw_data = data_df[['sentence_1', 'sentence_2']]
 
@@ -13,7 +13,10 @@ def preprocess(task, data_path, model_name): # task: "train", "valid", "test"
 
     labels = []
     if task=="train" or task=="valid":
-        labels = data_df['label'].values.tolist()
+        if scale:
+            labels = (data_df['label'].values/5.).tolist()
+        else:
+            labels = data_df['label'].values.tolist()
 
     inputs = {
         "input_ids": [],
