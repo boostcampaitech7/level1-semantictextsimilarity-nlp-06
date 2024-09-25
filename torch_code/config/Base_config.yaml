@@ -13,6 +13,7 @@ training:
     weight_decay: 0.01
   scheduler:
     name: CosineAnnealingWarmRestarts
+    patience: 3
     t0: 5
     tmult: 2
     etaMin: 0.00001
