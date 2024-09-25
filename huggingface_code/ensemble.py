@@ -9,6 +9,7 @@ from sklearn.linear_model import LinearRegression
 from lightgbm import LGBMRegressor
 from sklearn.model_selection import KFold
 from scipy.stats import pearsonr
+from transformers import AutoTokenizer
 
 from dataset import preprocess
 from configurer import configurer
@@ -25,73 +26,44 @@ class Ensemble():
         self.y_valid = read_csv(self.valid_path)['label'].values.reshape(-1, 1)
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        
+        self.X_train_base = self.base_prediction(self.train_path, self.config_paths, batch_size=16)
+        self.X_valid_base = self.base_prediction(self.valid_path, self.config_paths, batch_size=16)
+        self.X_test_base = self.base_prediction(self.test_path, self.config_paths, batch_size=1)
 
-    def base_predictions(self):
-        self.X_train_base = None
-        self.X_valid_base = None
-        self.X_test_base = None
+    def base_prediction(self, data_path, config_paths, batch_size):
+        base_preds = None
 
-        for config_path in self.config_paths:
+        for config_path in config_paths:
             config = configurer(config_path)
 
             print(f"Right now using \"{config.model_name}\"")
 
-            X_train = preprocess("test", self.train_path, config.model_name, False)
-            X_valid = preprocess("test", self.valid_path, config.model_name, False)
-            X_test = preprocess("test", self.test_path, config.model_name, False)
+            X_data = preprocess("test", data_path, config.model_name, False)
+            X_loader = DataLoader(X_data, batch_size=batch_size, shuffle=False)
 
-            X_train_loader = DataLoader(X_train, batch_size=16, shuffle=False)
-            X_valid_loader = DataLoader(X_valid, batch_size=16, shuffle=False)
-            X_test_loader = DataLoader(X_test, shuffle=False)
-
-            # model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=1)
             pt_name = config.model_name.split('/')[1] + '.pt'
             model = torch.load(os.path.join('./models', pt_name))
             model.to(self.device)
 
-            train_predictions = None
-            valid_predictions = None
-            test_predictions = None
-            for batch in tqdm(X_train_loader, "base prediction for train data", total=len(X_train_loader)):
+            predictions = None
+            for batch in tqdm(X_loader, "base prediction", total=len(X_loader)):
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 with torch.no_grad():
                     batch_prediction = model(**batch).logits.cpu().numpy()
-                    if train_predictions is None:
-                        train_predictions = batch_prediction
+                    if predictions is None:
+                        predictions = batch_prediction
                     else:
-                        train_predictions = np.concatenate([train_predictions, batch_prediction])
+                        predictions = np.concatenate([predictions, batch_prediction])
             
-            for batch in tqdm(X_valid_loader, "base prediction for valid data", total=len(X_valid_loader)):
-                batch = {k: v.to(self.device) for k, v in batch.items()}
-                with torch.no_grad():
-                    batch_prediction = model(**batch).logits.cpu().numpy()
-                    if valid_predictions is None:
-                        valid_predictions = batch_prediction
-                    else:
-                        valid_predictions = np.concatenate([valid_predictions, batch_prediction])
-            
-            for batch in tqdm(X_test_loader, "base prediction for test data", total=len(X_test_loader)):
-                batch = {k: v.to(self.device) for k, v in batch.items()}
-                with torch.no_grad():
-                    batch_prediction = model(**batch).logits.cpu().numpy()
-                    if test_predictions is None:
-                        test_predictions = batch_prediction
-                    else:
-                        test_predictions = np.concatenate([test_predictions, batch_prediction])
-
-            if self.X_train_base is None:
-                self.X_train_base = train_predictions
-                self.X_valid_base = valid_predictions
-                self.X_test_base = test_predictions
+            if base_preds is None:
+                base_preds = predictions
             else:
-                self.X_train_base = np.concatenate([self.X_train_base, train_predictions], axis=1)
-                self.X_valid_base = np.concatenate([self.X_valid_base, valid_predictions], axis=1)
-                self.X_test_base = np.concatenate([self.X_test_base, test_predictions], axis=1)
+                base_preds = np.concatenate([base_preds, predictions], axis=1)
+            
+        print("\n")
+        return base_preds
 
-            print("\n")
-
-        return self.X_train_base, self.y_train, self.X_valid_base, self.y_valid, self.X_test_base
-    
     def stacking(self, clf):
         self.classifier = None
         if clf=='linear':
@@ -163,3 +135,40 @@ class Ensemble():
         
         submission['target'] = np.round(test_predictions, 1)
         submission.to_csv('ensemble_output.csv')
+
+    def simulate(self, sentence_1, sentence_2, is_voting):
+        sequence = '[SEP]'.join([sentence_1, sentence_2])
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        base_prediction = None
+        for config_path in self.config_paths:
+            config = configurer(config_path)
+
+            print(f"Now Using {config.model_name}")
+            
+            pt_name = config.model_name.split('/')[1] + '.pt'
+            tokenizer = AutoTokenizer.from_pretrained(config.model_name, max_length=160)
+            model = torch.load(os.path.join('./models', pt_name))
+
+            tokens = tokenizer(sequence, return_tensors='pt', add_special_tokens=True, padding='max_length', truncation=True)
+
+            model.to(device)
+            tokens.to(device)
+
+            model.eval()
+            with torch.no_grad():
+                pred = model(**tokens).logits.cpu().numpy()
+            
+            if base_prediction is None:
+                base_prediction = pred
+            else:
+                base_prediction = np.concatenate((base_prediction, pred), axis=1)
+        
+        label = None
+        if is_voting:
+            label = np.mean(base_prediction, axis=1)
+        else:
+            label = self.classifier.predict(base_prediction)
+        label = np.round(label, 1)
+        return label
