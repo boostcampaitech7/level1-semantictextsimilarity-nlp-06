@@ -11,10 +11,11 @@ import wandb
 import os
 
 # seed 고정
-torch.manual_seed(0)
-torch.cuda.manual_seed(0)
-torch.cuda.manual_seed_all(0)
-random.seed(0)
+seed = 42
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+random.seed(seed)
 
 project_name = ""
 
@@ -72,19 +73,18 @@ def init_sweep_config():
                 'goal': 'minimize'
             },
             'parameters': {
-                'batch_size': {'values': [4, 8, 16, 32, 64]},
-                'max_epoch': {'values': [1, 3, 5, 10, 20, 30]},
+                'batch_size': {'values': [16]},
+                'max_epoch': {'values': [10]},
                 'learning_rate': {
                     'distribution': 'uniform',
-                    'min': 1e-6,
-                    'max': 1e-4
+                    'min': 1e-5,
+                    'max': 4e-5
                 },
                 'weight_decay': {
                     'distribution': 'uniform',
                     'min': 0.001,
                     'max': 0.1
-                },
-                'scheduler_patience': {'values': [3, 5, 7]}
+                }
             },
             'early_terminate': {  # sweep의 조기 종료 옵션 설정
                 'type': 'hyperband',

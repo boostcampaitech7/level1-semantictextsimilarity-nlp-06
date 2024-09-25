@@ -153,12 +153,12 @@ class TorchTrainer():
                 optim.zero_grad()
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.max_epoch}] loss : {loss}"
                 if lr_scheduler is not None:
+
                     if self.scheduler.name == "ReduceLROnPlateau":
                         lr_scheduler.step(loss) # Epoch이 너무 짧으므로 batch에 scheduler 도입
 
                     elif self.scheduler.name == "CosineAnnealingWarmRestarts":
                         lr_scheduler.step() # Epoch이 너무 짧으므로 batch에 scheduler 도입
-
             
             # 해당 epoch 내 평균 training loss
             avg_loss_train = total_loss_train / len(train_loader)
