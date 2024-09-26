@@ -1,24 +1,22 @@
-model_name: klue/roberta-small
-normalization: True
+model_name: deliciouscat/kf-deberta-base-cross-sts
+normalization: False
 training:
-  batch_size: 32
-  max_epoch: 1
+  batch_size: 17
+  max_epoch: 3
   shuffle: True  
   early_stop: True
-  learning_rate: 0.00002
+  learning_rate: 0.000654616132115182
   train_path': '../../data/train.csv'
   criterion: MSELoss
   optimizer:
     name: AdamW
-    weight_decay: 0.01
+    weight_decay: 0.007719344100307518
   scheduler:
     name: CosineAnnealingWarmRestarts
-    patience: 3
     t0: 5
     tmult: 2
     etaMin: 0.00001
-  hpo: "" # "wandb_sweep" or "optuna"
-
+  hpo: "optuna"
 
 test:
   dev_path': '../../data/dev.csv'
