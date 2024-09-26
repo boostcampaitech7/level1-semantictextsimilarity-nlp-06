@@ -1,0 +1,26 @@
+model_name: klue/roberta-large
+normalization: True
+training:
+  batch_size: 16
+  max_epoch: 5
+  shuffle: True  
+  early_stop: True
+  learning_rate: 0.00003
+  train_path': '../../../data/train_preprocess_v1.csv'
+  criterion: MSELoss
+  optimizer:
+    name: AdamW
+    weight_decay: 0.01
+  scheduler:
+    name: CosineAnnealingWarmRestarts
+    patience: 3
+    t0: 5
+    tmult: 2
+    etaMin: 0.00001
+  hpo: "" # "wandb_sweep" or "optuna"
+
+
+test:
+  dev_path': '../../../data/dev_preprocess_v1.csv'
+  test_path': '../../../data/dev_preprocess_v1.csv'
+  predict_path': '../../../data/test_preprocess_v1.csv'
