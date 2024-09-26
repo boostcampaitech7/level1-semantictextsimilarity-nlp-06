@@ -1,25 +1,19 @@
-model_name: klue/roberta-small
-normalization: True
+model_name: kakaobank/kf-deberta-base
 training:
-  batch_size: 32
-  max_epoch: 1
-  shuffle: True  
-  early_stop: True
-  learning_rate: 0.00002
+  batch_size: 16
+  max_epoch: 10
+  shuffle: True
+  learning_rate: 0.00001
   train_path': '../../data/train.csv'
-  criterion: MSELoss
-  optimizer:
+  loss: MSELoss
+  optimization:
     name: AdamW
     weight_decay: 0.01
   scheduler:
     name: CosineAnnealingWarmRestarts
-    patience: 3
     t0: 5
     tmult: 2
     etaMin: 0.00001
-  hpo: "" # "wandb_sweep" or "optuna"
-
-
 test:
   dev_path': '../../data/dev.csv'
   test_path': '../../data/dev.csv'
