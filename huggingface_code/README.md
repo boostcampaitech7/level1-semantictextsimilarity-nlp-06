@@ -36,6 +36,9 @@ python train.py --config ./config.yaml
 python test.py --is_peft {whehter the model tuned by peft} --data_path {path to test.csv} --model_path {path to model checkpoint dir} --submit_path {path to submission.csv}
 ```  
 
+### Ensemble
+`ensemble.ipynb`에 들어가서 쉘을 하나씩 실행해보세요.  
+
 ## Code Explanation
 ### dataset.py
 train, valid 데이터의 경우 Hugging Face의 Trainer를 사용하기 위해 아래와 같은 형태의 dictionary를 반환합니다.
