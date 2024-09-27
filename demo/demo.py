@@ -132,6 +132,10 @@ def show_head_view(model, tokenizer, sentence_a, sentence_b):
 def load_test_data():
     return pd.read_csv("../../data/test.csv")
 
+@st.cache_data
+def load_dev_data():
+    return pd.read_csv("../../data/dev.csv")
+
 @st.cache_resource
 def load_models_and_tokenizers():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -155,7 +159,8 @@ def load_models_and_tokenizers():
             model_deberta, model_roberta, model_electra_kr, model_electra_kor)
 
 # 테스트 데이터 불러오기
-test_data = load_test_data()
+# test_data = load_test_data()
+dev_data = load_dev_data()
 
 # 모델 저장 경로 지정
 deberta_path = "../huggingface_code/models/kf-deberta-base-cross-sts"
@@ -266,6 +271,10 @@ elif page == "Label 예측하기":
                 font-size: 36px;
                 font-weight: bold;
             }
+            .real-number {
+                font-size: 36px;
+                font-weight: normal;
+            }
         </style>
         """, unsafe_allow_html=True)
         
@@ -280,6 +289,8 @@ elif page == "Label 예측하기":
     if 'prediction_sentence_2' not in st.session_state:
         st.session_state.prediction_sentence_2 = ""
     
+    if 'true_label' not in st.session_state:
+        st.session_state.true_label = None
     if 'predicted_label' not in st.session_state:
         st.session_state.predicted_label = None
     if 'predicted_label_deberta' not in st.session_state:
@@ -291,6 +302,8 @@ elif page == "Label 예측하기":
     if 'predicted_label_electra_kor' not in st.session_state:
         st.session_state.predicted_label_electra_kor = None
 
+    if 'true_label_color' not in st.session_state:
+        st.session_state.true_label_color = ''
     if 'label_color' not in st.session_state:
         st.session_state.label_color = ''
     if 'label_color_deberta' not in st.session_state:
@@ -310,10 +323,12 @@ elif page == "Label 예측하기":
     st.subheader("")
     st.subheader("한국어 문장 쌍의 Label 예측")
 
-    if st.button("문장 쌍 랜덤으로 가져오기 (`test.csv`)", key="random_button"):
-        random_row = test_data.sample(n=1).iloc[0]
+    if st.button("문장 쌍 랜덤으로 가져오기 (`dev.csv`)", key="random_button"):
+        random_row = dev_data.sample(n=1).iloc[0]
         st.session_state.sentence_1 = random_row['sentence_1']
         st.session_state.sentence_2 = random_row['sentence_2']
+        st.session_state.true_label = random_row['label']
+        st.session_state.true_label_color = 'green' if float(st.session_state.true_label) >= 2.5 else 'red'
 
     sentence1 = st.text_input("문장1", value=st.session_state.get('sentence_1', ''), key='sentence1_input', placeholder="첫번째 문장을 입력해주세요")
     sentence2 = st.text_input("문장2", value=st.session_state.get('sentence_2', ''), key='sentence2_input', placeholder="두번째 문장을 입력해주세요")
@@ -329,10 +344,6 @@ elif page == "Label 예측하기":
             # 텍스트 전처리
             st.session_state.prediction_sentence_1 = preprocessing.preprocessing_texts(st.session_state.sentence_1)
             st.session_state.prediction_sentence_2 = preprocessing.preprocessing_texts(st.session_state.sentence_2)
-
-            # 예측에 사용될 문장 업데이트
-            # st.session_state.prediction_sentence_1 = st.session_state.sentence_1
-            # st.session_state.prediction_sentence_2 = st.session_state.sentence_2
             
             # 예측 수행
             model_results, final_results = simulate(config_paths, st.session_state.prediction_sentence_1, st.session_state.prediction_sentence_2, is_voting=True)
@@ -351,10 +362,39 @@ elif page == "Label 예측하기":
             st.session_state.label_color_electra_kor = 'green' if float(st.session_state.predicted_label_electra_kor) >= 2.5 else 'red'
 
             st.markdown(f"""
+            <style>
+                .centered {{
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    flex-direction: column;
+                }}
+                .left-aligned {{
+                    text-align: left;
+                    margin-top: 20px; /* Adjust this value to increase the space between labels and sentences */
+                }}
+                .label {{
+                    font-size: 28px;
+                    font-weight: bold;
+                }}
+                .predicted-number {{
+                    font-size: 36px;
+                    font-weight: bold;
+                }}
+                .real-label {{
+                    font-size: 36px;
+                    font-weight: normal;
+                }}
+            </style>
+
             <div class='centered'>
                 <p class='label'>
                     <span style='color: black;'>예측된 Label : </span>
                     <span class='predicted-number' style='color: {st.session_state.label_color};'>{st.session_state.predicted_label}</span>
+                </p>
+                <p class='label' style='font-weight: normal; margin-top: -10px;'> <!-- Decrease margin-top to bring labels closer -->
+                    <span style='color: black;'>실제 Label : </span>
+                    <span class='real-label' style='color: {st.session_state.true_label_color};'>{st.session_state.true_label}</span>
                 </p>
                 <div class='left-aligned'>
                     <p><strong>문장 1</strong>: {st.session_state.sentence_1}</p>
@@ -449,7 +489,13 @@ elif page == "Label 예측하기":
         st.markdown("")
 
         # 앙상블 통해 도출된 최종 label
-        st.markdown("<center>final label</center>", unsafe_allow_html=True)
-        st.markdown(f"<center><p style='font-size: 48px; font-weight: bold; color: {st.session_state.label_color};'>{st.session_state.predicted_label}</p></center>", unsafe_allow_html=True)
-
-
+        st.markdown("<center>final predicted label (true label)</center>", unsafe_allow_html=True)
+        st.markdown(f"""
+                <div style='text-align: center; white-space: nowrap;'>
+                    <span style='font-size: 48px; font-weight: bold; color: {st.session_state.label_color};'>{st.session_state.predicted_label}</span>
+                    <span style='font-size: 48px; color: black;'> (</span>
+                    <span style='font-size: 48px; color: {st.session_state.true_label_color};'>{st.session_state.true_label}</span>
+                    <span style='font-size: 48px; color: black;'>)</span>
+                </div>
+            """, unsafe_allow_html=True)
+        
