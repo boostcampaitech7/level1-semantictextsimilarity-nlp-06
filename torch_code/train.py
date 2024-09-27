@@ -108,9 +108,7 @@ def set_config(config, new_config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Specify your config file name in ./config/")
-    parser.add_argument("--wandb", action="store_true", help="Use W&B visualization")
-    #parser.add_argument("--wandb_sweep", action="store_true", help="Use W&B sweep for hyperparameter tuning")
-    #parser.add_argument("--optuna", action="store_true", help="Use optuna for hyperparameter tuning")
+    parser.add_argument("--wandb", action="store_true", help="Use W&B visualization") # Wandb DashBoard 활성화
     args = parser.parse_args()
 
     config_path = f"./config/{args.config}.yaml"
@@ -118,7 +116,7 @@ if __name__ == '__main__':
 
     if args.wandb:
         # W&B enabled
-        os.environ["WANDB_API_KEY"] = "f3b9c338e3c1b5fb7ffe28c2d3d5669d024ae93b" #"(본인 키 입력)" 
+        os.environ["WANDB_API_KEY"] = "" #"(본인 키 입력)" 
         project_name = f"project1_sts_test_{config.model_name.split('/')[1]}"
 
         wandb.login()
