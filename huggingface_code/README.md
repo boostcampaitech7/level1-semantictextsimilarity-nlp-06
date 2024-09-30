@@ -52,7 +52,7 @@ python test.py --is_peft {whehter the model tuned by peft} --data_path {path to 
 
 ### LoRA & Ensemble
 LoRA를 적용한 튜닝은 [`peft_test.ipynb`](./peft_test.ipynb)에서 확인할 수 있습니다.  
-[`ensemble.ipynb`](./ensemble.ipynb)에 들어가서 쉘을 하나씩 실행해보세요.  
+학습이 완료된 모델을 사용한 앙상블은 [`ensemble.ipynb`](./ensemble.ipynb)에 들어가서 쉘을 하나씩 실행해보세요.  
 
 ## Code Explanation
 ### dataset.py
