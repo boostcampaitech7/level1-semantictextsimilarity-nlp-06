@@ -27,7 +27,7 @@
 
 ## 3. 모델
 - **모델링 방법**: 두 가지 접근 방식을 시도
-    1. **PyTorch 기반**: 기본적인 모델 구현 및 성능 개선 (링크: ##TODO: 링크 추가)
+    1. **PyTorch 기반**: 기본적인 모델 구현 및 성능 개선 (설명 링크: ![Baseline for PyTorch](torch_code/README.md))
     2. **HuggingFace Trainer 기반**: 훈련 프로세스의 간소화 및 자동화 (설명 링크: ![Baseline for HuggingFace](huggingface_code/README.md))
 
 
