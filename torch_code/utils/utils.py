@@ -17,7 +17,7 @@ def save_config(config, file_path="./saved_model/config.txt"):
     with open(file_path, 'w') as file:    
         yaml.dump(config, file)
 
-def ckpt_save(model, result):#model_name, optimizer, epoch, loss, minimum_loss):
+def ckpt_save(model, result): #model_name, optimizer, epoch, loss, minimum_loss):
     # result : Dict()
     
     model_name = result["model_name"]
