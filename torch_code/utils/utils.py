@@ -13,11 +13,12 @@ def load_config(config_file):
     return config
 
 def save_config(config, file_path="./saved_model/config.txt"):
-    # save config.yaml
+    # Save config.yaml
     with open(file_path, 'w') as file:    
         yaml.dump(config, file)
 
-def ckpt_save(model, result):#model_name, optimizer, epoch, loss, minimum_loss):
+def ckpt_save(model, result):
+    # Save model to a ckpt file.
     # result : Dict()
     
     model_name = result["model_name"]
@@ -31,12 +32,12 @@ def ckpt_save(model, result):#model_name, optimizer, epoch, loss, minimum_loss):
     if not os.path.exists(model_directory):
         os.makedirs(model_directory)
     
-    # delete previous best-model
+    # Delete previous best-model.
     previous_best = glob.glob(os.path.join(model_directory, f"{model_name.split('/')[1]}_loss_*_pearson_*_epoch_*.pt"))
     for file in previous_best:
         os.remove(file)
 
-    # save new best-model
+    # Save new best-model.
     save_path = f"{model_name.split('/')[1]}_loss_{current_loss:.4f}_pearson_{pearson_valid:.4f}_epoch_{epoch}.pt"
     torch.save(model, os.path.join(model_directory,save_path))
 

@@ -195,9 +195,10 @@ class TorchTrainer():
                     "pearson_valid":pearson
                 }
                 if self.hpo == "optuna":
+                    # Change model_name to include the current trial number. 
                     result["model_name"] = f"{self.model_name}_trial_{self.trial.number}"
 
-                ckpt_save(model, result) #self.model_name, optim, self.max_epoch, avg_loss_valid, best_loss)
+                ckpt_save(model, result)
 
             
         return avg_loss_valid, pearson

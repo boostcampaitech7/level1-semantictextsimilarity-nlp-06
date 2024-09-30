@@ -17,11 +17,12 @@ torch.cuda.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 random.seed(seed)
 
-project_name = ""
-
+project_name = ""  # project name for logging
 
 
 def run_training():
+    # Train the model.
+
     # set dataloader
     dataloader = TextDataloader(
         model_name=config.model_name,
@@ -44,11 +45,14 @@ def run_training():
     return loss, pearson
 
 def run_sweep():
+    # Target function for wandb.sweep
     with wandb.init() as run:
         set_config(config, wandb.config)
         run_training()
 
 def run():
+    # Train the model.
+
     # 2 different hpo APIs
     match config.training.hpo:
         case "wandb_sweep":
@@ -66,6 +70,7 @@ def run():
             run_training()
 
 def init_sweep_config():
+    # Initialize the config for wandb.sweep to search the hyperparameters.
     sweep_config = {
             'method': 'bayes',
             'metric': {
@@ -118,7 +123,7 @@ if __name__ == '__main__':
 
     if args.wandb:
         # W&B enabled
-        os.environ["WANDB_API_KEY"] = "f3b9c338e3c1b5fb7ffe28c2d3d5669d024ae93b" #"(본인 키 입력)" 
+        os.environ["WANDB_API_KEY"] = ""  # "(본인 키 입력)" 
         project_name = f"project1_sts_test_{config.model_name.split('/')[1]}"
 
         wandb.login()
