@@ -1,0 +1,24 @@
+model_name: snunlp/KR-ELECTRA-discriminator
+normalization : False
+training:
+  batch_size: 8
+  max_epoch: 4
+  shuffle: True
+  early_stop: True
+  learning_rate: 0.00001
+  train_path': '../data/train_preprocess_v1.csv'
+  criterion: L1Loss
+  optimizer:
+    name: AdamW
+    weight_decay: 0.00044
+  scheduler:
+    name: CosineAnnealingWarmRestarts
+    patience: 2
+    etaMin: 0.00002
+    t0: 2
+    tmult: 2
+  hpo: ""
+test:
+  dev_path': '../data/dev_preprocess_v1.csv'
+  test_path': '../data/dev_preprocess_v1.csv'
+  predict_path': '../data/test_preprocess_v1.csv'

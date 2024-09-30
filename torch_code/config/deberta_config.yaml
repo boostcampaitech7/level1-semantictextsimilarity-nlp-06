@@ -1,0 +1,26 @@
+model_name: deliciouscat/kf-deberta-base-cross-sts
+normalization: False
+training:
+  batch_size: 7
+  max_epoch: 2
+  shuffle: True  
+  early_stop: True
+  learning_rate: 0.000912407791968186
+  train_path': '../../data/train.csv'
+  criterion: L1Loss
+  optimizer:
+    name: AdamW
+    weight_decay: 0.0023868976374298314
+  scheduler:
+    name: CosineAnnealingWarmRestarts
+    patience: 3
+    t0: 5
+    tmult: 2
+    etaMin: 0.00001
+  hpo: "optuna"
+
+
+test:
+  dev_path': '../../data/dev.csv'
+  test_path': '../../data/dev.csv'
+  predict_path': '../../data/test.csv'
