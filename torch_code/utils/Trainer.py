@@ -33,7 +33,8 @@ class EarlyStopping:
 
 class TorchTrainer():
     def __init__(self, config, use_wandb=False):
-
+        
+        # Config 파일을 통해서 정보를 받아옴
         self.model_name = config.model_name
         self.batch_size = config.training.batch_size
         self.learning_rate = config.training.learning_rate
@@ -52,7 +53,7 @@ class TorchTrainer():
 
     def get_finetuned_model(self):
         return self.model
-    
+
     def get_model(self, model_name):
         model = transformers.AutoModelForSequenceClassification.from_pretrained(
             pretrained_model_name_or_path=model_name, num_labels=1
@@ -99,6 +100,7 @@ class TorchTrainer():
         return lr_scheduler
 
     def valid(self, model, criterion, val_loader):
+        # dev.csv 데이터 기반으로 모델 validation
         model.eval()
         val_bar = tqdm(val_loader)
         all_preds = []
@@ -208,6 +210,7 @@ class TorchTrainer():
         
             
     def predict(self, model, dataloader):
+        # test.csv 기반으로 predictions 생성
         model.eval()
         all_preds = []
         with torch.no_grad():
