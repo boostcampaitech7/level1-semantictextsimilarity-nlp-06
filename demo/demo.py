@@ -1,5 +1,4 @@
 import os
-import time
 import yaml
 from box import Box
 import numpy as np
@@ -7,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 from sklearn.linear_model import LinearRegression
-from transformers import AutoTokenizer, RobertaConfig, RobertaForSequenceClassification
+from transformers import AutoTokenizer
 from bertviz import head_view
 
 import streamlit as st
@@ -20,15 +19,16 @@ import preprocessing_demo as preprocessing
 st.set_page_config(layout="wide", page_title="문장 간 유사도 측정 데모")
 
 # 함수 정의 --------------------------------------------------------------------------------------------------
+
+# config 파일 값 가져와 box 객체로 변환
 def load_config(config_file):
-    # Load Config.yaml
     with open(config_file) as file:
-        config = yaml.safe_load(file) # Dictionary
+        config = yaml.safe_load(file)
         config = Box(config)
     return config
 
+# config 파일에서 주요 하이퍼파라미터 값 추출
 def create_hyperparameter_dataframe(config):
-    # Extract values from config
     data = {
         'Parameter': ['Batch Size', 'Max Epoch', 'Learning Rate', 'Loss', 'Optimizer', 'Weight Decay', 'Scheduler'],
         'Value': [
@@ -43,48 +43,40 @@ def create_hyperparameter_dataframe(config):
             config.training.scheduler.name
         ]
     }
-    # Create DataFrame
     df = pd.DataFrame(data)
     return df
 
-def configurer(config_path):
-    with open(config_path) as file:
-        config = yaml.safe_load(file)
-        config = Box(config)
-
-    return config
-
+# 입력된 두 문장에 대해 ensemble 모델을 이용한 label prediction 수행
 def simulate(config_paths, sentence_1, sentence_2, is_voting):
     sequence = '[SEP]'.join([sentence_1, sentence_2])
-
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
     base_prediction = None
+    
+    # Ensemble의 각 모델로 inference 수행
     for config_path in config_paths:
-        config = configurer(config_path)
-
+        config = load_config(config_path)
         print(f"Now Using {config.model_name}")
         
+        # 앙상블의 각 모델 지정 및 토크나이징 수행
         pt_name = config.model_name.split('/')[1] + '.pt'
         tokenizer = AutoTokenizer.from_pretrained(config.model_name, max_length=160)
         model = torch.load(os.path.join('../huggingface_code/models', pt_name))
-
         tokens = tokenizer(sequence, return_tensors='pt', add_special_tokens=True, padding='max_length', truncation=True)
-
         model.to(device)
         tokens.to(device)
 
+        # 예측 수행
         model.eval()
         with torch.no_grad():
             pred = model(**tokens).logits.cpu().numpy()
         
+        # 예측 Label 값 저장
         if base_prediction is None:
             base_prediction = pred
         else:
             base_prediction = np.concatenate((base_prediction, pred), axis=1)
-        # del model
-        # torch.cuda.empty_cache()
     
+    # ensemble 수행
     label = None
     if is_voting:
         label = np.mean(base_prediction, axis=1)
@@ -95,6 +87,7 @@ def simulate(config_paths, sentence_1, sentence_2, is_voting):
     return base_prediction, label
 
 
+# bertviz의 head_view를 이용한 각 layer 별 attention head 시각화
 def show_head_view(model, tokenizer, sentence_a, sentence_b):
     inputs = tokenizer.encode_plus(sentence_a, sentence_b, return_tensors='pt', add_special_tokens=True).to('cuda')
     # 입력 ids
@@ -121,6 +114,7 @@ def show_head_view(model, tokenizer, sentence_a, sentence_b):
         sep_token_id = tokenizer.convert_tokens_to_ids(tokenizer.sep_token)
         sentence_b_start = input_id_list.index(sep_token_id, 1) + 1  # 첫 SEP 이후의 인덱스
     
+    # streamlit에 시각화 위해 html 형식으로 반환
     figure = head_view(attention, tokens, sentence_b_start=sentence_b_start, html_action='return')
     return figure
 
@@ -193,24 +187,26 @@ st.sidebar.subheader("문장 간 유사도 측정")
 # 사이드바의 옵션
 page = st.sidebar.radio("", ["모델 구조", "Label 예측하기"])
 
-# 페이지 내용 설정
+# 페이지 내용 설정 1. "모델 구조"
 if page == "모델 구조":
+    # 제목 설정
     st.markdown("<p style='font-size: 20px;'><strong>[NLP-06]</strong> Project 1 - 문장 간 유사도 측정</p>", unsafe_allow_html=True)
     st.title('Semantic Textual Similarity 데모')
     st.markdown("<p style='font-size: 24px; font-weight: bold;'>모델 구조 및 성능 소개</p>", unsafe_allow_html=True)
 
+    # 모델 도식 제시
     st.markdown(""); st.markdown("")
     st.subheader("모델 구조")
     image_col1, image_col2, image_col3 = st.columns([0.5, 8, 1.5])
     with image_col2:
         st.image("./image/flowchart.png")
 
+    # 사용된 최종 하이퍼파라미터 제시
     st.subheader("")
     st.subheader("하이퍼파라미터")
     hyper_col1, hyper_col2, hyper_col3, hyper_col4 = st.columns(4)
 
-    # 가운데 정렬을 위한 CSS 스타일 추가
-    center_style = '<div style="text-align: center;">'
+    center_style = '<div style="text-align: center;">'  # 가운데 정렬을 위한 CSS 스타일 추가
 
     with hyper_col1:
         st.markdown("<center><p style='font-size: 21px; font-weight: bold;'>DeBERTa</p></center>", unsafe_allow_html=True)
@@ -228,7 +224,7 @@ if page == "모델 구조":
         st.markdown("<center><p style='font-size: 21px; font-weight: bold;'>ELECTRA-KOR</p></center>", unsafe_allow_html=True)
         st.dataframe(hyperparameter_electra_kor.set_index(hyperparameter_electra_kor.columns[0]), width=1000)
 
-
+    # 최종 결과 제시 (리더보드)
     st.subheader("")
     st.subheader("성능: 피어슨 상관계수")
     st.markdown("")
@@ -242,9 +238,7 @@ if page == "모델 구조":
     st.markdown("이를 통해 우리 모델은 새로운 데이터에 대해 잘 일반화될 수 있는 견고한 모델임을 알 수 있습니다.")
     st.image("./image/leaderboard_final2.png")
     
-
-
-
+# 페이지 내용 설정 2. "Label 예측하기"
 elif page == "Label 예측하기":
 
     st.markdown("""
@@ -270,7 +264,7 @@ elif page == "Label 예측하기":
         """, unsafe_allow_html=True)
         
 
-    # 변수 초기화
+    # session state 변수 초기화
     if 'sentence_1' not in st.session_state:
         st.session_state.sentence_1 = ""
     if 'sentence_2' not in st.session_state:
@@ -302,11 +296,12 @@ elif page == "Label 예측하기":
     if 'label_color_electra_kor' not in st.session_state:
         st.session_state.label_color_electra_kor = ''
 
+    # 제목 설정
     st.markdown("<p style='font-size: 20px;'><strong>[NLP-06]</strong> Project 1 - 문장 간 유사도 측정</p>", unsafe_allow_html=True)
     st.title('Semantic Textual Similarity 데모')
     st.markdown("<p style='font-size: 24px; font-weight: bold;'>두 문장의 유사도 계산 예시</p>", unsafe_allow_html=True)
 
-
+    # 문장 쌍에 대한 label 예측 시각화
     st.subheader("")
     st.subheader("한국어 문장 쌍의 Label 예측")
 
@@ -314,11 +309,9 @@ elif page == "Label 예측하기":
         random_row = test_data.sample(n=1).iloc[0]
         st.session_state.sentence_1 = random_row['sentence_1']
         st.session_state.sentence_2 = random_row['sentence_2']
-
     sentence1 = st.text_input("문장1", value=st.session_state.get('sentence_1', ''), key='sentence1_input', placeholder="첫번째 문장을 입력해주세요")
     sentence2 = st.text_input("문장2", value=st.session_state.get('sentence_2', ''), key='sentence2_input', placeholder="두번째 문장을 입력해주세요")
         
-
     st.text('')
     if st.button("Label 값 예측하기", key="prediction_button", use_container_width=True):
         with st.spinner('Prediction 중...'):  
@@ -329,10 +322,6 @@ elif page == "Label 예측하기":
             # 텍스트 전처리
             st.session_state.prediction_sentence_1 = preprocessing.preprocessing_texts(st.session_state.sentence_1)
             st.session_state.prediction_sentence_2 = preprocessing.preprocessing_texts(st.session_state.sentence_2)
-
-            # 예측에 사용될 문장 업데이트
-            # st.session_state.prediction_sentence_1 = st.session_state.sentence_1
-            # st.session_state.prediction_sentence_2 = st.session_state.sentence_2
             
             # 예측 수행
             model_results, final_results = simulate(config_paths, st.session_state.prediction_sentence_1, st.session_state.prediction_sentence_2, is_voting=True)
