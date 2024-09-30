@@ -19,7 +19,7 @@ def save_config(config, file_path="./saved_model/config.txt"):
 
 def ckpt_save(model, result):
     # Save model to a ckpt file.
-    # result : Dict()
+    # result: Dict()
     
     model_name = result["model_name"]
     optim = result["optim"]

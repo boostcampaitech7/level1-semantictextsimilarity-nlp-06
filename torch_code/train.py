@@ -113,9 +113,7 @@ def set_config(config, new_config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="Specify your config file name in ./config/")
-    parser.add_argument("--wandb", action="store_true", help="Use W&B visualization")
-    #parser.add_argument("--wandb_sweep", action="store_true", help="Use W&B sweep for hyperparameter tuning")
-    #parser.add_argument("--optuna", action="store_true", help="Use optuna for hyperparameter tuning")
+    parser.add_argument("--wandb", action="store_true", help="Use W&B visualization") # Wandb DashBoard 활성화
     args = parser.parse_args()
 
     config_path = f"./config/{args.config}.yaml"

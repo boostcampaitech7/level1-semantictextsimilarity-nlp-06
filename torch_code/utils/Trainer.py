@@ -58,7 +58,7 @@ class TorchTrainer():
             pretrained_model_name_or_path=model_name, num_labels=1
         )
         return model
-        # if you want change custom model, you redefine this function
+        # if you want change custom model, redefine this function
 
     def get_optimizer(self, model, optimizer):
         if optimizer.name == "AdamW":
@@ -72,8 +72,10 @@ class TorchTrainer():
         # Add criterion(loss function)
         if criterion == "MSELoss":
             return torch.nn.MSELoss()
+            
         elif criterion == "L1Loss":
             return torch.nn.L1Loss()
+            
         elif criterion == "HuberLoss":
             return torch.nn.HuberLoss()
 
@@ -151,6 +153,7 @@ class TorchTrainer():
                 loss.backward()
                 optim.step()
                 optim.zero_grad()
+
                 train_bar.desc=f"Train Epoch[{epoch+1}/{self.max_epoch}] loss : {loss}"
                 if lr_scheduler is not None:
 
